@@ -1,0 +1,102 @@
+@import './theme.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+  background-color: #CAF0F8;
+  color: #03045E;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Roboto', 'Inter', Arial, sans-serif;
+  font-weight: 700;
+  color: #03045E;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: #0077B6;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+a:hover, a:focus {
+  color: #00B4D8;
+  text-decoration: underline;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background: #90E0EF;
+}
+::-webkit-scrollbar-thumb {
+  background: #00B4D8;
+  border-radius: 4px;
+}
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-success {
+    @apply bg-success-600 hover:bg-success-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-danger {
+    @apply bg-danger-600 hover:bg-danger-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+  }
+  
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  }
+  
+  .signal-buy {
+    @apply bg-success-100 text-success-800 border-success-200;
+  }
+  
+  .signal-sell {
+    @apply bg-danger-100 text-danger-800 border-danger-200;
+  }
+  
+  .signal-hold {
+    @apply bg-warning-100 text-warning-800 border-warning-200;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+} 
