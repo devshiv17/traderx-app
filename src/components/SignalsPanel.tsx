@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -11,7 +11,8 @@ import {
   RefreshCw,
   Filter,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ArrowUp
 } from 'lucide-react';
 import { BreakoutSignal, SessionSignals } from '../types';
 import apiService from '../services/api';
@@ -29,6 +30,8 @@ const SignalsPanel: React.FC<SignalsPanelProps> = ({ symbol, className = '' }) =
   const [viewMode, setViewMode] = useState<'list' | 'sessions'>('sessions');
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [expandedSignals, setExpandedSignals] = useState<Set<string>>(new Set());
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const fetchSignals = async () => {
     setLoading(true);
@@ -61,6 +64,20 @@ const SignalsPanel: React.FC<SignalsPanelProps> = ({ symbol, className = '' }) =
       newExpanded.add(signalId);
     }
     setExpandedSignals(newExpanded);
+  };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop } = e.currentTarget;
+    setShowScrollTop(scrollTop > 200);
+  };
+
+  const scrollToTop = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
   };
 
   const getSignalIcon = (signalType: string) => {
@@ -177,14 +194,50 @@ const SignalsPanel: React.FC<SignalsPanelProps> = ({ symbol, className = '' }) =
         {/* Price Information */}
         <div className="grid grid-cols-2 gap-4 mb-3">
           <div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">NIFTY Price</div>
-            <div className="font-semibold text-gray-900 dark:text-white">₹{formatPrice(signal.nifty_price)}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Entry Price</div>
+            <div className="font-semibold text-gray-900 dark:text-white">{formatPrice(signal.entry_price || signal.nifty_price)}</div>
           </div>
           <div>
             <div className="text-xs text-gray-500 dark:text-gray-400">{signal.future_symbol}</div>
             <div className="font-semibold text-gray-900 dark:text-white">₹{formatPrice(signal.future_price)}</div>
           </div>
         </div>
+
+        {/* Stop Loss and Targets */}
+        {(signal.stop_loss || signal.target_1 || signal.target_2) && (
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mb-3">
+            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Trading Levels</div>
+            <div className="grid grid-cols-3 gap-3 text-sm">
+              {signal.stop_loss && (
+                <div className="text-center">
+                  <div className="text-red-600 font-medium">Stop Loss</div>
+                  <div className="text-red-700 dark:text-red-400 font-semibold">{formatPrice(signal.stop_loss)}</div>
+                </div>
+              )}
+              {signal.target_1 && (
+                <div className="text-center">
+                  <div className="text-green-600 font-medium">Target 1</div>
+                  <div className="text-green-700 dark:text-green-400 font-semibold">{formatPrice(signal.target_1)}</div>
+                </div>
+              )}
+              {signal.target_2 && (
+                <div className="text-center">
+                  <div className="text-blue-600 font-medium">Target 2</div>
+                  <div className="text-blue-700 dark:text-blue-400 font-semibold">{formatPrice(signal.target_2)}</div>
+                </div>
+              )}
+            </div>
+            
+            {/* Risk-Reward Ratio */}
+            {signal.stop_loss && signal.target_1 && signal.entry_price && (
+              <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                  Risk-Reward: 1:{((signal.target_1) / Math.abs(signal.entry_price - signal.stop_loss)).toFixed(2)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Expanded Details */}
         {isExpanded && breakoutSummary && (
@@ -305,64 +358,89 @@ const SignalsPanel: React.FC<SignalsPanelProps> = ({ symbol, className = '' }) =
       </div>
 
       {/* Content */}
-      <div className="p-4">
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="w-4 h-4 text-red-500" />
-              <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
+      <div className="flex flex-col h-full">
+        {/* Fixed Error and Loading Section */}
+        <div className="flex-shrink-0 px-4 pt-4">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="w-4 h-4 text-red-500" />
+                <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {loading && (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-            <span className="ml-2 text-gray-600 dark:text-gray-400">Loading signals...</span>
-          </div>
-        )}
+          {loading && (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+              <span className="ml-2 text-gray-600 dark:text-gray-400">Loading signals...</span>
+            </div>
+          )}
+        </div>
 
-        {/* Sessions View */}
-        {viewMode === 'sessions' && !loading && (
-          <div className="space-y-6">
-            {Object.entries(sessionSignals).map(([sessionName, sessionSignalsList]) => (
-              sessionSignalsList.length > 0 && (
-                <div key={sessionName}>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">{sessionName}</h3>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {sessionSignalsList.length} signal{sessionSignalsList.length !== 1 ? 's' : ''}
-                    </span>
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-hidden px-4 pb-4 relative">
+          <div 
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className="h-full overflow-y-auto signals-scroll-container scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800"
+          >
+            {/* Sessions View */}
+            {viewMode === 'sessions' && !loading && (
+              <div className="space-y-6 signals-content-padding">
+                {Object.entries(sessionSignals).map(([sessionName, sessionSignalsList]) => (
+                  sessionSignalsList.length > 0 && (
+                    <div key={sessionName}>
+                      <div className="flex items-center justify-between mb-3 sticky top-0 bg-white dark:bg-gray-800 py-2 z-10 border-b border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">{sessionName}</h3>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full font-medium">
+                          {sessionSignalsList.length} signal{sessionSignalsList.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <div className="space-y-3 mb-6">
+                        {sessionSignalsList.map((signal) => renderSignalCard(signal))}
+                      </div>
+                    </div>
+                  )
+                ))}
+                
+                {Object.keys(sessionSignals).length === 0 && (
+                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                    <Activity className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p className="text-base font-medium mb-1">No signals found</p>
+                    <p className="text-sm opacity-75">Signals will appear here once generated</p>
                   </div>
-                  <div className="space-y-3">
-                    {sessionSignalsList.map((signal) => renderSignalCard(signal))}
+                )}
+              </div>
+            )}
+
+            {/* List View */}
+            {viewMode === 'list' && !loading && (
+              <div className="space-y-3 signals-content-padding">
+                {signals.map((signal) => renderSignalCard(signal))}
+                
+                {signals.length === 0 && (
+                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                    <Activity className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p className="text-base font-medium mb-1">No signals available</p>
+                    <p className="text-sm opacity-75">Switch to Sessions view or wait for new signals</p>
                   </div>
-                </div>
-              )
-            ))}
-            
-            {Object.keys(sessionSignals).length === 0 && (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>No signals found for today</p>
+                )}
               </div>
             )}
           </div>
-        )}
-
-        {/* List View */}
-        {viewMode === 'list' && !loading && (
-          <div className="space-y-3">
-            {signals.map((signal) => renderSignalCard(signal))}
-            
-            {signals.length === 0 && (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>No signals available</p>
-              </div>
-            )}
-          </div>
-        )}
+          
+          {/* Scroll to Top Button */}
+          {showScrollTop && (
+            <button
+              onClick={scrollToTop}
+              className="absolute bottom-4 right-6 bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-105 z-20"
+              title="Scroll to top"
+            >
+              <ArrowUp className="w-5 h-5" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -78,6 +78,10 @@ export interface BreakoutSignal {
   nifty_price: number;
   future_price: number;
   future_symbol: string;
+  entry_price: number;
+  stop_loss?: number;
+  target_1?: number;
+  target_2?: number;
   confidence: number;
   status: 'ACTIVE' | 'COMPLETED' | 'EXPIRED';
   session_high: number;
