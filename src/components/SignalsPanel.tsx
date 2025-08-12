@@ -110,11 +110,19 @@ const SignalsPanel: React.FC<SignalsPanelProps> = ({ symbol, className = '' }) =
     return 'text-red-600';
   };
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number | null | undefined) => {
+    if (price === null || price === undefined || isNaN(price)) {
+      return 'N/A';
+    }
     return new Intl.NumberFormat('en-IN', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(price);
+  };
+
+  const formatPoints = (points: number | null | undefined) => {
+    const formatted = formatPrice(points);
+    return formatted; // No currency symbol - these are index points
   };
 
   const formatTime = (timestamp: string) => {
@@ -194,12 +202,16 @@ const SignalsPanel: React.FC<SignalsPanelProps> = ({ symbol, className = '' }) =
         {/* Price Information */}
         <div className="grid grid-cols-2 gap-4 mb-3">
           <div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Entry Price</div>
-            <div className="font-semibold text-gray-900 dark:text-white">{formatPrice(signal.entry_price || signal.nifty_price)}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Entry Points</div>
+            <div className="font-semibold text-gray-900 dark:text-white">
+              {formatPoints(signal.entry_price || signal.nifty_price)}
+            </div>
           </div>
           <div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">{signal.future_symbol}</div>
-            <div className="font-semibold text-gray-900 dark:text-white">₹{formatPrice(signal.future_price)}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{signal.future_symbol || 'Future'}</div>
+            <div className="font-semibold text-gray-900 dark:text-white">
+              {formatPoints(signal.future_price)}
+            </div>
           </div>
         </div>
 
@@ -211,19 +223,19 @@ const SignalsPanel: React.FC<SignalsPanelProps> = ({ symbol, className = '' }) =
               {signal.stop_loss && (
                 <div className="text-center">
                   <div className="text-red-600 font-medium">Stop Loss</div>
-                  <div className="text-red-700 dark:text-red-400 font-semibold">{formatPrice(signal.stop_loss)}</div>
+                  <div className="text-red-700 dark:text-red-400 font-semibold">{formatPoints(signal.stop_loss)}</div>
                 </div>
               )}
               {signal.target_1 && (
                 <div className="text-center">
                   <div className="text-green-600 font-medium">Target 1</div>
-                  <div className="text-green-700 dark:text-green-400 font-semibold">{formatPrice(signal.target_1)}</div>
+                  <div className="text-green-700 dark:text-green-400 font-semibold">{formatPoints(signal.target_1)}</div>
                 </div>
               )}
               {signal.target_2 && (
                 <div className="text-center">
                   <div className="text-blue-600 font-medium">Target 2</div>
-                  <div className="text-blue-700 dark:text-blue-400 font-semibold">{formatPrice(signal.target_2)}</div>
+                  <div className="text-blue-700 dark:text-blue-400 font-semibold">{formatPoints(signal.target_2)}</div>
                 </div>
               )}
             </div>
@@ -271,12 +283,12 @@ const SignalsPanel: React.FC<SignalsPanelProps> = ({ symbol, className = '' }) =
               <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Session Levels</div>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <div className="text-green-600 font-medium">High: ₹{formatPrice(breakoutSummary.levels.nifty_session_high)}</div>
-                  <div className="text-red-600 font-medium">Low: ₹{formatPrice(breakoutSummary.levels.nifty_session_low)}</div>
+                  <div className="text-green-600 font-medium">High: {formatPoints(breakoutSummary.levels.nifty_session_high)}</div>
+                  <div className="text-red-600 font-medium">Low: {formatPoints(breakoutSummary.levels.nifty_session_low)}</div>
                 </div>
                 <div>
-                  <div className="text-green-600 font-medium">High: ₹{formatPrice(breakoutSummary.levels.future_session_high)}</div>
-                  <div className="text-red-600 font-medium">Low: ₹{formatPrice(breakoutSummary.levels.future_session_low)}</div>
+                  <div className="text-green-600 font-medium">High: {formatPoints(breakoutSummary.levels.future_session_high)}</div>
+                  <div className="text-red-600 font-medium">Low: {formatPoints(breakoutSummary.levels.future_session_low)}</div>
                 </div>
               </div>
             </div>
@@ -287,13 +299,13 @@ const SignalsPanel: React.FC<SignalsPanelProps> = ({ symbol, className = '' }) =
                 {signal.vwap_nifty && (
                   <div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">NIFTY VWAP</div>
-                    <div className="text-sm font-medium text-blue-600">₹{formatPrice(signal.vwap_nifty)}</div>
+                    <div className="text-sm font-medium text-blue-600">{formatPoints(signal.vwap_nifty)}</div>
                   </div>
                 )}
                 {signal.vwap_future && (
                   <div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">Future VWAP</div>
-                    <div className="text-sm font-medium text-blue-600">₹{formatPrice(signal.vwap_future)}</div>
+                    <div className="text-sm font-medium text-blue-600">{formatPoints(signal.vwap_future)}</div>
                   </div>
                 )}
               </div>

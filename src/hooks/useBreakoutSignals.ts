@@ -27,27 +27,38 @@ export function useBreakoutSignals(options: UseBreakoutSignalsOptions = {}) {
     setError(null);
     
     try {
+      // Use today-only endpoint which pre-filters current day data
+      const todayResponse = await apiService.getTodaySignals();
+      const todaySignals = todayResponse.all_signals || todayResponse.signals || [];
+      
+      // Convert to proper format
+      const formattedSignals: BreakoutSignal[] = todaySignals.map((signal: any) => ({
+        ...signal,
+        id: signal.id || signal._id,
+        session_name: signal.session_name || 'Unknown Session',
+        signal_type: signal.signal_type || 'BUY',
+        timestamp: signal.timestamp || signal.created_at,
+        status: signal.status || 'ACTIVE'
+      }));
+      
+      setSignals(formattedSignals);
+
       if (viewMode === 'sessions') {
-        const response = await apiService.getSignalsBySession({ limit: 50 });
-        setSessionSignals(response.sessions);
-        
-        // Also update flat signals list for convenience
-        const allSignals: BreakoutSignal[] = [];
-        Object.values(response.sessions).forEach(sessionSignalsList => {
-          allSignals.push(...sessionSignalsList);
-        });
-        setSignals(allSignals);
-      } else {
-        const response = await apiService.getSignalsWithBreakoutDetails({ 
-          limit: 50,
-          session_name: symbol ? undefined : undefined // Can filter by session if needed
-        });
-        setSignals(response.signals);
-        
-        // Group by sessions for convenience
+        // Group by sessions
         const grouped: SessionSignals = {};
-        response.signals.forEach((signal: BreakoutSignal) => {
-          const sessionName = signal.session_name;
+        formattedSignals.forEach((signal: BreakoutSignal) => {
+          const sessionName = signal.session_name || 'Unknown Session';
+          if (!grouped[sessionName]) {
+            grouped[sessionName] = [];
+          }
+          grouped[sessionName].push(signal);
+        });
+        setSessionSignals(grouped);
+      } else {
+        // Group by sessions for convenience even in list mode
+        const grouped: SessionSignals = {};
+        formattedSignals.forEach((signal: BreakoutSignal) => {
+          const sessionName = signal.session_name || 'Unknown Session';
           if (!grouped[sessionName]) {
             grouped[sessionName] = [];
           }

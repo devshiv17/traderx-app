@@ -37,7 +37,7 @@ export function useChartData(
 ) {
   const {
     autoRefresh = true,
-    refreshInterval = 30000, // Increased to 30 seconds to reduce server load
+    refreshInterval = 15000, // 15 seconds - faster updates since backend now uses caching
     enabled = true
   } = options;
 
