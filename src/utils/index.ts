@@ -90,22 +90,25 @@ export function calculatePercentageChange(current: number, previous: number): nu
   return ((current - previous) / previous) * 100;
 }
 
-// Format timestamp
+// Format timestamp (assumes IST from backend)
 export function formatTimestamp(timestamp: string | Date): string {
   const date = new Date(timestamp);
-  return date.toLocaleString('en-US', {
+  // Backend now sends IST timestamps directly - no conversion needed!
+  return date.toLocaleString('en-IN', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'Asia/Kolkata'
   });
 }
 
-// Format relative time
+// Format relative time (assumes IST from backend)
 export function formatRelativeTime(timestamp: string | Date): string {
   const date = new Date(timestamp);
   const now = new Date();
+  // Both dates are in IST timezone - direct comparison works!
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
   if (diffInSeconds < 60) {
@@ -186,6 +189,43 @@ export function generateId(): string {
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+// IST Timezone utilities for frontend
+export const istUtils = {
+  // Format IST timestamp for display (backend sends IST already)
+  formatISTDateTime: (timestamp: string | Date): string => {
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZone: 'Asia/Kolkata'
+    });
+  },
+
+  // Format IST time only
+  formatISTTime: (timestamp: string | Date): string => {
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Asia/Kolkata'
+    });
+  },
+
+  // Get current IST time
+  getCurrentIST: (): Date => {
+    return new Date();
+  },
+
+  // Parse IST timestamp from backend (no conversion needed)
+  parseISTTimestamp: (timestamp: string): Date => {
+    return new Date(timestamp);
+  }
+};
 
 // Retry function
 export async function retry<T>(

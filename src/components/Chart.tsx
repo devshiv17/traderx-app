@@ -32,17 +32,16 @@ const timeframes = [
   { value: '1d', label: '1D' }
 ];
 
-// Utility function to format timestamps in IST timezone
+// Utility function to format timestamps (already in IST from backend)
 const formatISTTime = (unixTimestamp: number, includeSeconds: boolean = false) => {
-  // The backend now sends UTC Unix timestamps
-  // We need to format them as IST timezone
+  // Backend now sends IST timestamps directly - no timezone conversion needed!
   const date = new Date(unixTimestamp * 1000);
   
   const timeOptions: Intl.DateTimeFormatOptions = {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-    timeZone: 'Asia/Kolkata'
+    // No timeZone conversion needed - data is already in IST!
   };
   
   if (includeSeconds) {
@@ -64,7 +63,7 @@ const formatISTDate = (unixTimestamp: number) => {
   });
 };
 
-export default function Chart({ symbol, timeframe, onTimeframeChange, displayName, autoRefresh = true, refreshInterval = 5000 }: ChartProps) {
+export default function Chart({ symbol, timeframe, onTimeframeChange, displayName, autoRefresh = true, refreshInterval = 15000 }: ChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);

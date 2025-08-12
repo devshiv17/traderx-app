@@ -122,9 +122,9 @@ class ApiService {
 
   // Trading Signals
   async getSignals(symbol?: string): Promise<TradingSignal[]> {
-    const url = symbol ? `/signals?symbol=${symbol}` : '/signals';
-    const response: AxiosResponse<ApiResponse<SignalsResponse>> = await this.api.get(url);
-    return response.data.data.signals;
+    // Use the working direct endpoint
+    const response: AxiosResponse<any> = await this.api.get('/signals/direct');
+    return response.data.signals || [];
   }
 
   async generateSignal(symbol: string): Promise<TradingSignal> {
@@ -262,7 +262,14 @@ class ApiService {
   }
 
   async getMonitoringStatus(): Promise<any> {
-    const response: AxiosResponse<any> = await this.api.get('/signals/monitoring-status');
+    // Use the new today-only endpoint that properly filters current day data
+    const response: AxiosResponse<any> = await this.api.get('/signals/today');
+    return response.data;
+  }
+
+  async getTodaySignals(): Promise<any> {
+    // Use the new today-only endpoint that returns pre-filtered data
+    const response: AxiosResponse<any> = await this.api.get('/signals/today');
     return response.data;
   }
 
@@ -288,24 +295,30 @@ class ApiService {
     limit?: number;
     session_name?: string;
   }): Promise<any> {
-    const queryParams = new URLSearchParams();
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.session_name) queryParams.append('session_name', params.session_name);
-    
-    const response: AxiosResponse<any> = await this.api.get(`/signals/breakout-details?${queryParams.toString()}`);
-    return response.data;
+    // Use the working direct endpoint
+    const response: AxiosResponse<any> = await this.api.get('/signals/direct');
+    return { signals: response.data.signals || [] };
   }
 
   async getSignalsBySession(params?: {
     date?: string;
     limit?: number;
   }): Promise<any> {
-    const queryParams = new URLSearchParams();
-    if (params?.date) queryParams.append('date', params.date);
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    // Use the working monitoring-status endpoint which has all_signals
+    const response: AxiosResponse<any> = await this.api.get('/signals/monitoring-status');
+    const signals = response.data.all_signals || [];
     
-    const response: AxiosResponse<any> = await this.api.get(`/signals/by-session?${queryParams.toString()}`);
-    return response.data;
+    // Group signals by session manually
+    const sessions: { [key: string]: any[] } = {};
+    signals.forEach((signal: any) => {
+      const sessionName = signal.session_name || 'Unknown Session';
+      if (!sessions[sessionName]) {
+        sessions[sessionName] = [];
+      }
+      sessions[sessionName].push(signal);
+    });
+    
+    return { sessions };
   }
 
   async getSignalHistoryGrouped(params?: {
