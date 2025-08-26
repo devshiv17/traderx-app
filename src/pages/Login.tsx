@@ -224,12 +224,12 @@ export default function Login({ onLogin }: LoginProps) {
   const handleQuickFill = () => {
     setFormData({
       email: 'admin@admin.com',
-      password: 'pass',
+      password: 'SecurePass123!',
     });
     // Trigger validation for both fields
     setTimeout(() => {
       validateField('email', 'admin@admin.com');
-      validateField('password', 'pass');
+      validateField('password', 'SecurePass123!');
     }, 100);
   };
 
@@ -273,7 +273,7 @@ export default function Login({ onLogin }: LoginProps) {
             <div>
               <h3 className="font-semibold text-sm">Demo Credentials</h3>
               <p className="text-xs opacity-90">Email: admin@admin.com</p>
-              <p className="text-xs opacity-90">Password: pass</p>
+              <p className="text-xs opacity-90">Password: SecurePass123!</p>
             </div>
             <button
               onClick={handleQuickFill}
